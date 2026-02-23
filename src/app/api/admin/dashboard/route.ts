@@ -95,7 +95,7 @@ export async function GET(req: NextRequest) {
 
     // Email stats by type today
     db.emailOutbox.groupBy({
-      by: ["type"],
+      by: ["emailType"],
       _count: { id: true },
       where: { createdAt: { gte: todayStart } },
     }),
@@ -160,11 +160,11 @@ export async function GET(req: NextRequest) {
     apiKeyIds.length > 0
       ? await db.apiKey.findMany({
           where: { id: { in: apiKeyIds } },
-          select: { id: true, prefix: true },
+          select: { id: true, keyPrefix: true },
         })
       : [];
 
-  const prefixMap = new Map(apiKeys.map((k: { id: string; prefix: string }) => [k.id, k.prefix]));
+  const prefixMap = new Map(apiKeys.map((k: { id: string; keyPrefix: string }) => [k.id, k.keyPrefix]));
 
   const topKeys = topKeysRaw.map(
     (k: { apiKeyId: string | null; _count: { id: number } }) => ({
@@ -227,8 +227,8 @@ export async function GET(req: NextRequest) {
   );
 
   const emailTypeMap: Record<string, number> = {};
-  for (const e of emailByType as { type: string; _count: { id: number } }[]) {
-    emailTypeMap[e.type] = e._count.id;
+  for (const e of emailByType as { emailType: string; _count: { id: number } }[]) {
+    emailTypeMap[e.emailType] = e._count.id;
   }
 
   const email = {
