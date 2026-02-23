@@ -140,13 +140,13 @@ export async function compileNycBriefing() {
       restaurant: string;
       neighborhood: string | null;
       cuisine: string | null;
-      dealType: string | null;
+      dealType: string;
       title: string;
       description: string | null;
-      price: number | null;
+      price: string | null;
       startDate: Date | null;
       endDate: Date | null;
-      url: string | null;
+      url: string;
     }) => ({
       id: d.id,
       restaurant: d.restaurant,
