@@ -48,53 +48,39 @@
       "path": "/api/jobs/curate-news",
       "schedule": "30 6,12,18 * * *"
     },
-
     {
-      "_comment": "=== CITYPING TIME-SLOT EMAIL SYSTEM v2 ===",
-      "_doc": "9:00 AM ET - Morning Briefing (comprehensive daily digest)",
       "path": "/api/jobs/email-router?slot=morning",
       "schedule": "0 14 * * *"
     },
     {
-      "_comment": "12:00 PM ET - Midday Pulse (breaking alerts + updates since morning)",
       "path": "/api/jobs/email-router?slot=noon",
       "schedule": "0 17 * * *"
     },
     {
-      "_comment": "7:00 PM ET - Evening Wind-Down (day-ahead preview + tomorrow prep)",
       "path": "/api/jobs/email-router?slot=evening",
       "schedule": "0 0 * * *"
     },
-
     {
-      "_comment": "=== LEGACY JOBS (maintained during transition period) ===",
-      "_doc": "Daily digest: 7:00 AM ET (12:00 UTC)",
       "path": "/api/jobs/send-daily-digest",
       "schedule": "0 12 * * *"
     },
     {
-      "_comment": "Daily pulse: 7:30 AM ET weekdays (12:30 UTC)",
       "path": "/api/jobs/send-daily-pulse",
       "schedule": "30 12 * * 1-5"
     },
     {
-      "_comment": "Weekly digest: Sunday 8:00 AM ET (13:00 UTC)",
       "path": "/api/jobs/send-weekly-digest",
       "schedule": "0 13 * * 0"
     },
     {
-      "_comment": "Day ahead: 6:00 PM ET (23:00 UTC)",
       "path": "/api/jobs/send-day-ahead",
       "schedule": "0 23 * * *"
     },
     {
-      "_comment": "Reminders: 7:00 PM ET (00:00 UTC next day)",
       "path": "/api/jobs/send-reminders",
       "schedule": "0 0 * * *"
     },
-
     {
-      "_comment": "Process pending notifications every 10 minutes during waking hours",
       "path": "/api/jobs/send-notifications",
       "schedule": "*/10 7-22 * * *"
     },
