@@ -86,8 +86,7 @@ export async function compileNycBriefing() {
 
   // Check if ASP is suspended today
   const todaySuspension = suspensionEvents.find(
-    (e: { date: Date; summary?: string | null }) =>
-      e.date.toISOString().split('T')[0] === todayStart.toISOString().split('T')[0]
+    (e) => e.date.toISOString().split('T')[0] === todayStart.toISOString().split('T')[0]
   );
 
   const payload = {
@@ -95,15 +94,7 @@ export async function compileNycBriefing() {
     generatedAt: now.toISOString(),
     version: '1.0',
     transit: {
-      alerts: transitAlerts.map((a: {
-        id: string;
-        title: string;
-        body: string | null;
-        neighborhoods: string[];
-        startsAt: Date | null;
-        endsAt: Date | null;
-        metadata: unknown;
-      }) => ({
+      alerts: transitAlerts.map((a) => ({
         id: a.id,
         title: a.title,
         body: a.body,
@@ -116,18 +107,18 @@ export async function compileNycBriefing() {
     parking: {
       aspSuspended: !!todaySuspension,
       reason: todaySuspension?.summary ?? null,
-      upcoming: suspensionEvents.map((e: { date: Date; summary?: string | null }) => ({
+      upcoming: suspensionEvents.map((e) => ({
         date: e.date.toISOString().split('T')[0],
         reason: e.summary,
       })),
     },
     events: {
       featured: cityEvents
-        .filter((e: { insiderScore: number }) => e.insiderScore >= 70)
+        .filter((e) => e.insiderScore >= 70)
         .slice(0, 5)
         .map(formatCityEvent),
       today: cityEvents
-        .filter((e: { startsAt: Date | null }) => {
+        .filter((e) => {
           const eventDate = e.startsAt?.toISOString().split('T')[0];
           const today = todayStart.toISOString().split('T')[0];
           return eventDate === today;
@@ -135,19 +126,7 @@ export async function compileNycBriefing() {
         .map(formatCityEvent),
       thisWeek: cityEvents.map(formatCityEvent),
     },
-    dining: diningDeals.map((d: {
-      id: string;
-      restaurant: string;
-      neighborhood: string | null;
-      cuisine: string | null;
-      dealType: string;
-      title: string;
-      description: string | null;
-      price: string | null;
-      startDate: Date | null;
-      endDate: Date | null;
-      url: string;
-    }) => ({
+    dining: diningDeals.map((d) => ({
       id: d.id,
       restaurant: d.restaurant,
       neighborhood: d.neighborhood,
@@ -161,15 +140,7 @@ export async function compileNycBriefing() {
       url: d.url,
     })),
     news: {
-      topStories: newsArticles.map((n: {
-        id: string;
-        title: string;
-        source: string;
-        summary: string | null;
-        nycAngle: string | null;
-        url: string;
-        publishedAt: Date;
-      }) => ({
+      topStories: newsArticles.map((n) => ({
         id: n.id,
         title: n.title,
         source: n.source,
@@ -179,28 +150,14 @@ export async function compileNycBriefing() {
         publishedAt: n.publishedAt.toISOString(),
       })),
     },
-    airQuality: airQuality.map((a: {
-      zipCode: string;
-      aqi: number;
-      category: string;
-      pollutant: string;
-      isAlert: boolean;
-    }) => ({
+    airQuality: airQuality.map((a) => ({
       zipCode: a.zipCode,
       aqi: a.aqi,
       category: a.category,
       pollutant: a.pollutant,
       isAlert: a.isAlert,
     })),
-    serviceAlerts: serviceAlerts.map((s: {
-      id: string;
-      complaintType: string;
-      descriptor: string | null;
-      address: string | null;
-      borough: string | null;
-      severity: string;
-      status: string;
-    }) => ({
+    serviceAlerts: serviceAlerts.map((s) => ({
       id: s.id,
       type: s.complaintType,
       descriptor: s.descriptor,
@@ -209,19 +166,7 @@ export async function compileNycBriefing() {
       severity: s.severity,
       status: s.status,
     })),
-    parks: parkEvents.map((p: {
-      id: string;
-      name: string;
-      description: string | null;
-      parkName: string | null;
-      borough: string | null;
-      date: Date;
-      startTime: string | null;
-      endTime: string | null;
-      category: string | null;
-      isFree: boolean;
-      url: string | null;
-    }) => ({
+    parks: parkEvents.map((p) => ({
       id: p.id,
       name: p.name,
       description: p.description,
