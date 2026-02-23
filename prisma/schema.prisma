@@ -983,3 +983,78 @@ model JobLock {
   @@index([expiresAt])
   @@map("job_locks")
 }
+
+// ============================================================================
+// B2B API — Clients, Keys, Logs, Compiled Briefings
+// ============================================================================
+
+/// Plan tier for API access rate limiting and billing.
+enum ApiPlanTier {
+  free       // 100 requests/day
+  pro        // 10,000 requests/day
+  enterprise // Unlimited
+
+  @@map("api_plan_tier")
+}
+
+/// B2B API customer. Separate from B2C User model.
+model ApiClient {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  companyName String?  @map("company_name")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  apiKeys ApiKey[]
+
+  @@map("api_clients")
+}
+
+/// API key for B2B authentication.
+/// Raw key shown once on creation; only SHA-256 hash stored.
+model ApiKey {
+  id          String      @id @default(cuid())
+  hashedKey   String      @unique @map("hashed_key")
+  keyPrefix   String      @map("key_prefix") // "sk_live_Ab..." for display
+  apiClientId String      @map("api_client_id")
+  name        String?     // User-friendly label like "Production Key"
+  planTier    ApiPlanTier @default(free) @map("plan_tier")
+  isActive    Boolean     @default(true) @map("is_active")
+  lastUsedAt  DateTime?   @map("last_used_at") @db.Timestamptz
+  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime    @updatedAt @map("updated_at") @db.Timestamptz
+
+  apiClient ApiClient @relation(fields: [apiClientId], references: [id], onDelete: Cascade)
+  logs      ApiLog[]
+
+  @@map("api_keys")
+}
+
+/// Request log for rate limiting and billing analytics.
+model ApiLog {
+  id             String   @id @default(cuid())
+  apiKeyId       String   @map("api_key_id")
+  endpoint       String   // "/api/v1/briefing"
+  statusCode     Int      @map("status_code")
+  responseTimeMs Int?     @map("response_time_ms")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  apiKey ApiKey @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+
+  @@index([apiKeyId, createdAt])
+  @@index([createdAt])
+  @@map("api_logs")
+}
+
+/// Pre-compiled API response payload.
+/// Refreshed every 15 minutes by the compiler task.
+model CompiledBriefing {
+  id        String   @id @default(cuid())
+  city      String   // "nyc"
+  payload   Json     // Full JSONB briefing object
+  version   String   @default("1.0") // Schema version
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([city, createdAt])
+  @@map("compiled_briefings")
+}
