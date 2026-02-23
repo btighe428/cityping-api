@@ -65,6 +65,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  try {
   const now = new Date();
   const todayStart = new Date(now);
   todayStart.setHours(0, 0, 0, 0);
@@ -278,4 +279,11 @@ export async function GET(req: NextRequest) {
       })
     ),
   });
+  } catch (error) {
+    console.error("[admin/dashboard] Error:", error);
+    return NextResponse.json(
+      { error: "Internal server error", details: String(error) },
+      { status: 500 }
+    );
+  }
 }
