@@ -1,0 +1,720 @@
+openapi: 3.0.3
+info:
+  title: CityPing API
+  description: >
+    The CityPing B2B API delivers a unified, real-time city briefing for New York City.
+    Designed for travel app developers, corporate concierge platforms, and smart city
+    integrations, it aggregates transit alerts, events, dining deals, news, air quality,
+    service alerts, and park events into a single, cacheable endpoint. Authenticate with
+    a bearer token and receive a comprehensive briefing payload refreshed every 15 minutes.
+  version: 1.0.0
+  contact:
+    name: CityPing API Support
+    email: api@cityping.com
+    url: https://cityping.com
+
+servers:
+  - url: https://api.cityping.com
+    description: Production
+  - url: http://localhost:3000
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+paths:
+  /api/v1/briefing:
+    get:
+      operationId: getBriefing
+      summary: Retrieve the current city briefing
+      description: >
+        Returns a comprehensive, pre-compiled briefing for the requested city.
+        The payload includes transit alerts, alternate-side parking status, featured
+        and upcoming events, dining deals, top news stories, air quality readings,
+        311 service alerts, and park events. Responses are cached and refreshed every
+        15 minutes.
+      tags:
+        - Briefing
+      parameters:
+        - name: city
+          in: query
+          required: false
+          description: City identifier. Currently only New York City is supported.
+          schema:
+            type: string
+            default: nyc
+            enum:
+              - nyc
+      responses:
+        "200":
+          description: Successful briefing response.
+          headers:
+            X-RateLimit-Remaining:
+              description: Number of requests remaining in the current rate-limit window.
+              schema:
+                type: integer
+            Cache-Control:
+              description: Caching directive for the response.
+              schema:
+                type: string
+                example: public, max-age=900
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Briefing"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+              example:
+                data:
+                  city: nyc
+                  generatedAt: "2026-02-23T14:30:00Z"
+                  version: "1.0.0"
+                  transit:
+                    alerts:
+                      - id: "mta-alert-8842"
+                        title: "A/C/E service suspended between 14 St and Chambers St"
+                        body: "Due to signal problems, A/C/E trains are running with delays. Expect 15-20 min waits."
+                        neighborhoods:
+                          - Chelsea
+                          - Tribeca
+                        startsAt: "2026-02-23T06:00:00Z"
+                        endsAt: "2026-02-23T18:00:00Z"
+                        metadata:
+                          source: MTA
+                          lines:
+                            - A
+                            - C
+                            - E
+                  parking:
+                    aspSuspended: true
+                    reason: "Presidents' Day (Observed)"
+                    upcoming:
+                      - date: "2026-02-27"
+                        reason: "Purim"
+                  events:
+                    featured:
+                      - id: "evt-4401"
+                        title: "Lunar New Year Parade in Flushing"
+                        description: "Annual parade celebrating the Year of the Horse with floats, lion dances, and live performances."
+                        category: culture
+                        startsAt: "2026-02-23T11:00:00Z"
+                        endsAt: "2026-02-23T15:00:00Z"
+                        venue: "Flushing Main Street"
+                        neighborhood: "Flushing"
+                        borough: "Queens"
+                        insiderScore: 92
+                        scarcityScore: 78
+                        tags:
+                          - free
+                          - family-friendly
+                          - outdoor
+                    today:
+                      - id: "evt-4402"
+                        title: "Knicks vs. Celtics at Madison Square Garden"
+                        category: sports
+                        startsAt: "2026-02-23T19:30:00Z"
+                        venue: "Madison Square Garden"
+                        neighborhood: "Midtown"
+                        borough: "Manhattan"
+                        insiderScore: 85
+                        scarcityScore: 90
+                        tags:
+                          - ticketed
+                          - indoor
+                    thisWeek:
+                      - id: "evt-4410"
+                        title: "Brooklyn Night Bazaar"
+                        description: "Indoor market with local vendors, live music, and food stalls."
+                        category: food
+                        startsAt: "2026-02-27T18:00:00Z"
+                        endsAt: "2026-02-27T23:00:00Z"
+                        venue: "Greenpoint Terminal Market"
+                        neighborhood: "Greenpoint"
+                        borough: "Brooklyn"
+                        insiderScore: 74
+                        scarcityScore: 40
+                        tags:
+                          - food
+                          - nightlife
+                  dining:
+                    - id: "deal-221"
+                      restaurant: "Le Bernardin"
+                      neighborhood: "Midtown West"
+                      cuisine: "French Seafood"
+                      dealType: prix-fixe
+                      title: "Winter Restaurant Week Prix Fixe"
+                      description: "Three-course lunch menu featuring seasonal seafood."
+                      price: "$60"
+                      startDate: "2026-02-17"
+                      endDate: "2026-03-02"
+                      url: "https://www.le-bernardin.com/restaurant-week"
+                  news:
+                    topStories:
+                      - id: "news-9981"
+                        title: "MTA Approves Second Avenue Subway Phase 3 Funding"
+                        source: "NY Times"
+                        summary: "The MTA board voted to allocate $4.5 billion for extending the Second Avenue line to 125th Street."
+                        nycAngle: "Harlem and East Harlem residents will gain direct subway access, reducing commute times by up to 30 minutes."
+                        url: "https://www.nytimes.com/2026/02/23/nyregion/mta-second-ave-phase3.html"
+                        publishedAt: "2026-02-23T09:15:00Z"
+                  airQuality:
+                    - zipCode: "10001"
+                      aqi: 42
+                      category: Good
+                      pollutant: PM2.5
+                      isAlert: false
+                    - zipCode: "11201"
+                      aqi: 55
+                      category: Moderate
+                      pollutant: Ozone
+                      isAlert: false
+                  serviceAlerts:
+                    - id: "311-20260223-4451"
+                      type: "Water Main Break"
+                      descriptor: "Water flowing from ground"
+                      address: "Broadway & W 72nd St"
+                      borough: "Manhattan"
+                      severity: high
+                      status: open
+                  parks:
+                    - id: "park-evt-881"
+                      name: "Winter Birding Walk"
+                      description: "Guided birding tour through the Ramble with NYC Audubon."
+                      parkName: "Central Park"
+                      borough: "Manhattan"
+                      date: "2026-02-23"
+                      startTime: "08:00"
+                      endTime: "10:00"
+                      category: "nature"
+                      isFree: true
+                      url: "https://www.nycgovparks.org/events/2026/02/23/winter-birding"
+                meta:
+                  city: nyc
+                  generatedAt: "2026-02-23T14:30:00Z"
+                  version: "1.0.0"
+        "401":
+          description: Unauthorized. The request lacks a valid API key or the key has been revoked.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error:
+                  code: 401
+                  message: "Invalid or missing API key. Include a valid Bearer token in the Authorization header."
+        "404":
+          description: Not Found. The requested city is not available.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error:
+                  code: 404
+                  message: "City not found. Currently only 'nyc' is supported."
+        "429":
+          description: Rate limit exceeded. Retry after the duration indicated in the Retry-After header.
+          headers:
+            Retry-After:
+              description: Number of seconds to wait before retrying.
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error:
+                  code: 429
+                  message: "Rate limit exceeded. Please wait before making another request."
+        "500":
+          description: Internal server error. An unexpected condition prevented the request from being fulfilled.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error:
+                  code: 500
+                  message: "An internal error occurred. If the problem persists, contact api@cityping.com."
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: "sk_live_<random>"
+      description: >
+        API keys follow the format `sk_live_<random>`. Include the key in the
+        Authorization header as a Bearer token. Keys are provisioned through the
+        CityPing developer dashboard.
+
+  schemas:
+    Briefing:
+      type: object
+      description: A comprehensive city briefing aggregating multiple real-time data sources.
+      required:
+        - city
+        - generatedAt
+        - version
+        - transit
+        - parking
+        - events
+        - dining
+        - news
+        - airQuality
+        - serviceAlerts
+        - parks
+      properties:
+        city:
+          type: string
+          description: City identifier.
+          example: nyc
+        generatedAt:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp of when this briefing was compiled.
+        version:
+          type: string
+          description: Briefing schema version.
+          example: "1.0.0"
+        transit:
+          type: object
+          required:
+            - alerts
+          properties:
+            alerts:
+              type: array
+              items:
+                $ref: "#/components/schemas/TransitAlert"
+        parking:
+          type: object
+          required:
+            - aspSuspended
+            - reason
+            - upcoming
+          properties:
+            aspSuspended:
+              type: boolean
+              description: Whether alternate-side parking rules are suspended today.
+            reason:
+              type: string
+              nullable: true
+              description: Reason for suspension, or null if rules are in effect.
+            upcoming:
+              type: array
+              description: Scheduled upcoming suspensions.
+              items:
+                type: object
+                required:
+                  - date
+                  - reason
+                properties:
+                  date:
+                    type: string
+                    format: date
+                    description: Date of the upcoming suspension.
+                  reason:
+                    type: string
+                    description: Reason for the upcoming suspension.
+        events:
+          type: object
+          required:
+            - featured
+            - today
+            - thisWeek
+          properties:
+            featured:
+              type: array
+              description: Editorially curated headline events.
+              items:
+                $ref: "#/components/schemas/CityEvent"
+            today:
+              type: array
+              description: Events happening today.
+              items:
+                $ref: "#/components/schemas/CityEvent"
+            thisWeek:
+              type: array
+              description: Events happening later this week.
+              items:
+                $ref: "#/components/schemas/CityEvent"
+        dining:
+          type: array
+          description: Active dining deals, restaurant week offers, and notable openings.
+          items:
+            $ref: "#/components/schemas/DiningDeal"
+        news:
+          type: object
+          required:
+            - topStories
+          properties:
+            topStories:
+              type: array
+              description: Top local news stories with NYC-specific angles.
+              items:
+                $ref: "#/components/schemas/NewsStory"
+        airQuality:
+          type: array
+          description: Air quality index readings by zip code.
+          items:
+            $ref: "#/components/schemas/AirQualityReading"
+        serviceAlerts:
+          type: array
+          description: Active 311 service alerts and municipal notices.
+          items:
+            $ref: "#/components/schemas/ServiceAlert"
+        parks:
+          type: array
+          description: Upcoming events in NYC parks.
+          items:
+            $ref: "#/components/schemas/ParkEvent"
+
+    TransitAlert:
+      type: object
+      description: A transit service alert from the MTA or other transit authority.
+      required:
+        - id
+        - title
+        - neighborhoods
+        - metadata
+      properties:
+        id:
+          type: string
+          description: Unique alert identifier.
+        title:
+          type: string
+          description: Short summary of the alert.
+        body:
+          type: string
+          description: Extended description with details and impact.
+        neighborhoods:
+          type: array
+          description: Neighborhoods affected by this alert.
+          items:
+            type: string
+        startsAt:
+          type: string
+          format: date-time
+          description: When the disruption begins.
+        endsAt:
+          type: string
+          format: date-time
+          description: Expected resolution time.
+        metadata:
+          type: object
+          description: Additional source-specific metadata.
+          additionalProperties: true
+
+    CityEvent:
+      type: object
+      description: A city event such as a festival, sports game, civic gathering, or seasonal highlight.
+      required:
+        - id
+        - title
+        - category
+        - insiderScore
+        - scarcityScore
+        - tags
+      properties:
+        id:
+          type: string
+          description: Unique event identifier.
+        title:
+          type: string
+          description: Event title.
+        description:
+          type: string
+          description: Detailed event description.
+        category:
+          type: string
+          description: Event category.
+          enum:
+            - culture
+            - sports
+            - food
+            - civic
+            - weather
+            - transit
+            - seasonal
+            - local
+        startsAt:
+          type: string
+          format: date-time
+          description: Event start time.
+        endsAt:
+          type: string
+          format: date-time
+          description: Event end time.
+        venue:
+          type: string
+          description: Venue name.
+        neighborhood:
+          type: string
+          description: Neighborhood where the event takes place.
+        borough:
+          type: string
+          description: NYC borough.
+        insiderScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: CityPing insider relevance score (0-100).
+        scarcityScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Availability scarcity score (0-100). Higher means harder to attend.
+        tags:
+          type: array
+          description: Descriptive tags for filtering and display.
+          items:
+            type: string
+
+    DiningDeal:
+      type: object
+      description: A dining deal, restaurant week offer, notable opening, or limited-time special.
+      required:
+        - id
+        - restaurant
+        - dealType
+        - title
+      properties:
+        id:
+          type: string
+          description: Unique deal identifier.
+        restaurant:
+          type: string
+          description: Restaurant name.
+        neighborhood:
+          type: string
+          description: Neighborhood where the restaurant is located.
+        cuisine:
+          type: string
+          description: Cuisine type.
+        dealType:
+          type: string
+          description: Type of dining deal.
+          enum:
+            - prix-fixe
+            - opening
+            - special
+            - deal
+        title:
+          type: string
+          description: Deal headline.
+        description:
+          type: string
+          description: Details about the deal.
+        price:
+          type: string
+          description: Price or price range.
+        startDate:
+          type: string
+          format: date
+          description: When the deal becomes available.
+        endDate:
+          type: string
+          format: date
+          description: When the deal expires.
+        url:
+          type: string
+          format: uri
+          description: Link to the deal or restaurant page.
+
+    NewsStory:
+      type: object
+      description: A top local news story with an NYC-specific angle.
+      required:
+        - id
+        - title
+        - source
+        - url
+        - publishedAt
+      properties:
+        id:
+          type: string
+          description: Unique story identifier.
+        title:
+          type: string
+          description: Headline.
+        source:
+          type: string
+          description: Publication or news outlet.
+        summary:
+          type: string
+          description: Brief summary of the story.
+        nycAngle:
+          type: string
+          description: Why this story matters specifically to New Yorkers.
+        url:
+          type: string
+          format: uri
+          description: Link to the full article.
+        publishedAt:
+          type: string
+          format: date-time
+          description: Publication timestamp.
+
+    AirQualityReading:
+      type: object
+      description: An air quality index reading for a specific zip code.
+      required:
+        - zipCode
+        - aqi
+        - category
+        - isAlert
+      properties:
+        zipCode:
+          type: string
+          description: Five-digit zip code.
+        aqi:
+          type: integer
+          minimum: 0
+          maximum: 500
+          description: Air Quality Index value.
+        category:
+          type: string
+          description: EPA AQI category.
+          enum:
+            - Good
+            - Moderate
+            - Unhealthy for Sensitive Groups
+            - Unhealthy
+            - Very Unhealthy
+            - Hazardous
+        pollutant:
+          type: string
+          description: Primary pollutant measured.
+        isAlert:
+          type: boolean
+          description: Whether the reading triggers a health advisory.
+
+    ServiceAlert:
+      type: object
+      description: A 311 service alert or municipal notice.
+      required:
+        - id
+        - type
+        - severity
+        - status
+      properties:
+        id:
+          type: string
+          description: Unique alert identifier.
+        type:
+          type: string
+          description: Alert type (e.g., Water Main Break, Power Outage).
+        descriptor:
+          type: string
+          description: Specific complaint or condition descriptor.
+        address:
+          type: string
+          description: Location of the incident.
+        borough:
+          type: string
+          description: NYC borough.
+        severity:
+          type: string
+          description: Severity level.
+          enum:
+            - low
+            - medium
+            - high
+            - critical
+        status:
+          type: string
+          description: Current status of the alert.
+
+    ParkEvent:
+      type: object
+      description: An event taking place in an NYC park.
+      required:
+        - id
+        - name
+        - parkName
+        - date
+        - isFree
+      properties:
+        id:
+          type: string
+          description: Unique park event identifier.
+        name:
+          type: string
+          description: Event name.
+        description:
+          type: string
+          description: Event description.
+        parkName:
+          type: string
+          description: Name of the park.
+        borough:
+          type: string
+          description: NYC borough.
+        date:
+          type: string
+          format: date
+          description: Event date.
+        startTime:
+          type: string
+          description: Start time in HH:MM format.
+        endTime:
+          type: string
+          description: End time in HH:MM format.
+        category:
+          type: string
+          description: Event category (e.g., nature, sports, arts).
+        isFree:
+          type: boolean
+          description: Whether the event is free to attend.
+        url:
+          type: string
+          format: uri
+          description: Link to event details.
+
+    Meta:
+      type: object
+      description: Response metadata.
+      required:
+        - city
+        - generatedAt
+        - version
+      properties:
+        city:
+          type: string
+          description: City identifier for this briefing.
+          example: nyc
+        generatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the briefing was generated.
+        version:
+          type: string
+          description: API version.
+          example: "1.0.0"
+
+    Error:
+      type: object
+      description: Standard error response envelope.
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: integer
+              description: HTTP status code.
+            message:
+              type: string
+              description: Human-readable error description.
