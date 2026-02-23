@@ -48,8 +48,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_mock", {
   typescript: true,
 });
 
-// Initialize Resend for notification emails
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize Resend for notification emails (gracefully handle missing key during build)
+const resendApiKey = process.env.RESEND_API_KEY;
+const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 /**
  * Character set for referral code generation.
@@ -392,7 +393,7 @@ async function sendReferralConversionEmail(
   }
 
   try {
-    await resend.emails.send({
+    await resend!.emails.send({
       from: "CityPing <hello@cityping.com>",
       to: email,
       subject: "Your friend upgraded! Here's your free month",
