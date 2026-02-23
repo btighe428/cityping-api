@@ -137,6 +137,10 @@
     {
       "path": "/api/jobs/scrape-streets",
       "schedule": "0 */4 * * *"
+    },
+    {
+      "path": "/api/jobs/compile-briefing",
+      "schedule": "*/15 * * * *"
     }
   ]
 }
